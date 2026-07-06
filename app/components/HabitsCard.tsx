@@ -24,19 +24,36 @@ export function HabitsCard({
     const data = await apiGet<HabitWithStatus[]>("/api/habits");
     setHabits(data);
     setLoading(false);
-    onChange?.(data.filter((h) => h.completed_today).length, data.length);
   }
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useRealtimeRefresh(["habits", "habit_logs"], load);
 
+  // Derived from whatever `habits` currently holds, so every optimistic
+  // update (toggle, delete, revert) is reflected in the Header badge instantly
+  // without each handler having to remember to report it.
+  useEffect(() => {
+    onChange?.(habits.filter((h) => h.completed_today).length, habits.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [habits]);
+
   async function toggle(habitId: string) {
-    await apiPost("/api/habit-logs", { habit_id: habitId });
-    load();
+    const wasCompleted = habits.find((h) => h.id === habitId)?.completed_today ?? false;
+
+    setHabits((prev) =>
+      prev.map((h) => (h.id === habitId ? { ...h, completed_today: !wasCompleted } : h))
+    );
+
+    try {
+      await apiPost("/api/habit-logs", { habit_id: habitId });
+    } catch {
+      setHabits((prev) =>
+        prev.map((h) => (h.id === habitId ? { ...h, completed_today: wasCompleted } : h))
+      );
+    }
   }
 
   async function addHabit() {
@@ -55,8 +72,21 @@ export function HabitsCard({
   }
 
   async function removeHabit(id: string) {
-    await apiDelete(`/api/habits?id=${id}`);
-    load();
+    const removedIndex = habits.findIndex((h) => h.id === id);
+    const removed = habits[removedIndex];
+    if (!removed) return;
+
+    setHabits((prev) => prev.filter((h) => h.id !== id));
+
+    try {
+      await apiDelete(`/api/habits?id=${id}`);
+    } catch {
+      setHabits((prev) => {
+        const next = [...prev];
+        next.splice(Math.min(removedIndex, next.length), 0, removed);
+        return next;
+      });
+    }
   }
 
   return (

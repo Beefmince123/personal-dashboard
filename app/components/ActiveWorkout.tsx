@@ -66,12 +66,14 @@ export function ActiveWorkout({ template, onClose, onFinished }: ActiveWorkoutPr
     }
   }
 
-  async function handleSetCompleted() {
+  function handleSetCompleted() {
     if (currentSet < totalSets) {
       setCurrentSet((s) => s + 1);
       return;
     }
-    await logExercise();
+    // Advance immediately; the log write happens in the background so the
+    // UI doesn't wait on the network between exercises.
+    logExercise().catch((err) => console.error("Failed to log exercise", err));
     advance();
   }
 

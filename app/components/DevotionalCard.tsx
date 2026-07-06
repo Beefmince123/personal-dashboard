@@ -5,7 +5,7 @@ import { BookOpen, Pencil, Check, Flame } from "lucide-react";
 import { Card } from "./Card";
 import { apiGet, apiPost } from "@/lib/api";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
-import { todayISO } from "@/lib/date";
+import { isoDaysAgo, todayISO } from "@/lib/date";
 import type { Devotional } from "@/lib/types";
 
 export function DevotionalCard({ onChange }: { onChange?: (streak: number) => void }) {
@@ -19,20 +19,38 @@ export function DevotionalCard({ onChange }: { onChange?: (streak: number) => vo
     const data = await apiGet<Devotional | null>("/api/devotional");
     setDevotional(data);
     setLoading(false);
-    if (data) onChange?.(data.streak_count);
   }
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useRealtimeRefresh(["devotional"], load);
 
+  // Derived from `devotional`, so the Header streak badge follows every
+  // optimistic update (and revert) automatically.
+  useEffect(() => {
+    if (devotional) onChange?.(devotional.streak_count);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [devotional]);
+
   async function markComplete() {
-    const data = await apiPost<Devotional>("/api/devotional", { complete: true });
-    setDevotional(data);
-    onChange?.(data.streak_count);
+    if (!devotional) return;
+    const today = todayISO();
+    if (devotional.last_completed_date === today) return;
+
+    const previous = devotional;
+    const yesterday = isoDaysAgo(1, today);
+    const optimisticStreak =
+      devotional.last_completed_date === yesterday ? devotional.streak_count + 1 : 1;
+    setDevotional({ ...devotional, streak_count: optimisticStreak, last_completed_date: today });
+
+    try {
+      const data = await apiPost<Devotional>("/api/devotional", { complete: true });
+      setDevotional(data);
+    } catch {
+      setDevotional(previous);
+    }
   }
 
   function startEdit() {

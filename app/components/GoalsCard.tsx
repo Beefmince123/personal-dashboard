@@ -72,8 +72,21 @@ export function GoalsCard() {
   }
 
   async function removeGoal(id: string) {
-    await apiDelete(`/api/goals?id=${id}`);
-    load();
+    const removedIndex = goals.findIndex((g) => g.id === id);
+    const removed = goals[removedIndex];
+    if (!removed) return;
+
+    setGoals((prev) => prev.filter((g) => g.id !== id));
+
+    try {
+      await apiDelete(`/api/goals?id=${id}`);
+    } catch {
+      setGoals((prev) => {
+        const next = [...prev];
+        next.splice(Math.min(removedIndex, next.length), 0, removed);
+        return next;
+      });
+    }
   }
 
   return (

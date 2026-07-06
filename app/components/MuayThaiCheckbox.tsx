@@ -1,36 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import { Check } from "lucide-react";
 import clsx from "clsx";
-import { apiPost } from "@/lib/api";
-import { todayISO } from "@/lib/date";
 
 interface MuayThaiCheckboxProps {
-  templateId: string;
   completedToday: boolean;
-  onComplete: () => void;
+  onCheck: () => void;
 }
 
+// Purely presentational — the parent owns the optimistic update and the API
+// call, since it's the one holding the completed-today state and streak.
 // No delete endpoint on completed-workouts, so — like the devotional "mark
 // complete" button — this only supports checking in, not undoing it.
-export function MuayThaiCheckbox({ templateId, completedToday, onComplete }: MuayThaiCheckboxProps) {
-  const [saving, setSaving] = useState(false);
-
-  async function markAttended() {
-    if (completedToday || saving) return;
-    setSaving(true);
-    try {
-      await apiPost("/api/completed-workouts", {
-        template_id: templateId,
-        date: todayISO(),
-      });
-      onComplete();
-    } finally {
-      setSaving(false);
-    }
-  }
-
+export function MuayThaiCheckbox({ completedToday, onCheck }: MuayThaiCheckboxProps) {
   return (
     <label
       className={clsx(
@@ -49,8 +31,10 @@ export function MuayThaiCheckbox({ templateId, completedToday, onComplete }: Mua
       <input
         type="checkbox"
         checked={completedToday}
-        disabled={completedToday || saving}
-        onChange={markAttended}
+        disabled={completedToday}
+        onChange={() => {
+          if (!completedToday) onCheck();
+        }}
         className="sr-only"
       />
       <span

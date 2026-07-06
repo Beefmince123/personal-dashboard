@@ -29,7 +29,10 @@ import {
 export function WorkoutSchedule() {
   const [todaySchedule, setTodaySchedule] = useState<WorkoutScheduleWithTemplate | null>(null);
   const [completedToday, setCompletedToday] = useState<CompletedWorkout | null>(null);
-  const [streak, setStreak] = useState(0);
+  // Kept as raw dates (not a precomputed number) so an optimistic check-in can
+  // just add today's date and get a correct streak via computeStreak, instead
+  // of guessing at +1/-1 arithmetic.
+  const [completedDates, setCompletedDates] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [templates, setTemplates] = useState<WorkoutTemplateWithExercises[]>([]);
@@ -55,8 +58,7 @@ export function WorkoutSchedule() {
     ]);
     setTodaySchedule(scheduleData);
     setCompletedToday(completedData[0] ?? null);
-    const dates = Array.from(new Set(streakRangeData.map((w) => w.date)));
-    setStreak(computeStreak(dates, today));
+    setCompletedDates(Array.from(new Set(streakRangeData.map((w) => w.date))));
     setLoading(false);
   }
 
@@ -105,6 +107,35 @@ export function WorkoutSchedule() {
   const sortedExercises = template
     ? [...template.exercises].sort((a, b) => a.order_index - b.order_index)
     : [];
+  const streak = computeStreak(completedDates, today);
+
+  async function handleMuayThaiComplete() {
+    if (!template || completedToday) return;
+
+    const previousCompleted = completedToday;
+    const previousDates = completedDates;
+    const optimisticWorkout: CompletedWorkout = {
+      id: `optimistic-${Date.now()}`,
+      template_id: template.id,
+      date: today,
+      duration_minutes: null,
+      notes: null,
+      created_at: new Date().toISOString(),
+    };
+    setCompletedToday(optimisticWorkout);
+    setCompletedDates((prev) => (prev.includes(today) ? prev : [...prev, today]));
+
+    try {
+      const data = await apiPost<CompletedWorkout>("/api/completed-workouts", {
+        template_id: template.id,
+        date: today,
+      });
+      setCompletedToday(data);
+    } catch {
+      setCompletedToday(previousCompleted);
+      setCompletedDates(previousDates);
+    }
+  }
 
   return (
     <Card
@@ -165,9 +196,8 @@ export function WorkoutSchedule() {
                   <p className="text-sm font-medium text-blue-700">Workout completed today ✓</p>
                 ) : isMuayThai ? (
                   <MuayThaiCheckbox
-                    templateId={template.id}
                     completedToday={!!completedToday}
-                    onComplete={load}
+                    onCheck={handleMuayThaiComplete}
                   />
                 ) : (
                   <button

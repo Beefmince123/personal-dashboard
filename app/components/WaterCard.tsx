@@ -40,8 +40,6 @@ export function WaterCard({ onChange }: { onChange?: (cups: number, goal: number
     setPersonalInfo(personalData);
     setSizeInput(String(waterData.cup_size_ml));
     setLoading(false);
-    const dailyWaterMl = calculateDailyWaterMl(personalData.weight_kg, personalData.activity_level);
-    onChange?.(waterData.cups, Math.max(1, Math.ceil(dailyWaterMl / waterData.cup_size_ml)));
   }
 
   useEffect(() => {
@@ -54,26 +52,45 @@ export function WaterCard({ onChange }: { onChange?: (cups: number, goal: number
   const dailyWaterMl = calculateDailyWaterMl(personalInfo.weight_kg, personalInfo.activity_level);
   const goalCups = log ? Math.max(1, Math.ceil(dailyWaterMl / log.cup_size_ml)) : 0;
 
+  // Derived from current `log`, so the Header badge tracks every optimistic
+  // update (and revert) automatically instead of each handler reporting it.
+  useEffect(() => {
+    if (log) onChange?.(log.cups, goalCups);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [log, goalCups]);
+
   async function setCups(cups: number) {
-    const data = await apiPost<WaterLog>("/api/water-logs", {
-      date: today,
-      cups: Math.max(0, cups),
-    });
-    setLog(data);
-    onChange?.(data.cups, Math.max(1, Math.ceil(dailyWaterMl / data.cup_size_ml)));
+    if (!log) return;
+    const target = Math.max(0, cups);
+    const previous = log;
+    setLog({ ...log, cups: target });
+
+    try {
+      const data = await apiPost<WaterLog>("/api/water-logs", { date: today, cups: target });
+      setLog(data);
+    } catch {
+      setLog(previous);
+    }
   }
 
   async function saveCupSize() {
     const size = parseInt(sizeInput, 10);
-    if (!Number.isNaN(size) && size > 0) {
+    setEditingSize(false);
+    if (Number.isNaN(size) || size <= 0 || !log) return;
+
+    const previous = log;
+    setLog({ ...log, cup_size_ml: size });
+
+    try {
       const data = await apiPost<WaterLog>("/api/water-logs", {
         date: today,
         cup_size_ml: size,
       });
       setLog(data);
-      onChange?.(data.cups, Math.max(1, Math.ceil(dailyWaterMl / data.cup_size_ml)));
+    } catch {
+      setLog(previous);
+      setSizeInput(String(previous.cup_size_ml));
     }
-    setEditingSize(false);
   }
 
   if (loading || !log) {
