@@ -6,6 +6,7 @@ import {
   Plus,
   Settings,
   History as HistoryIcon,
+  TrendingUp,
   Pencil,
   Trash2,
   X,
@@ -16,6 +17,7 @@ import { MuayThaiCheckbox } from "./MuayThaiCheckbox";
 import { ActiveWorkout } from "./ActiveWorkout";
 import { WorkoutTemplateEditor } from "./WorkoutTemplateEditor";
 import { WorkoutHistory } from "./WorkoutHistory";
+import { ExerciseProgressModal } from "./ExerciseProgressModal";
 import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 import { isoDaysAgo, todayDayOfWeek, todayISO, computeStreak } from "@/lib/date";
@@ -41,6 +43,7 @@ export function WorkoutSchedule() {
   const [showActiveWorkout, setShowActiveWorkout] = useState(false);
   const [showManage, setShowManage] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<
     WorkoutTemplateWithExercises | "new" | null
   >(null);
@@ -144,6 +147,13 @@ export function WorkoutSchedule() {
       actions={
         <>
           <button
+            onClick={() => setShowProgress(true)}
+            className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
+            aria-label="Exercise progress"
+          >
+            <TrendingUp size={16} />
+          </button>
+          <button
             onClick={() => setShowHistory(true)}
             className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
             aria-label="Workout history"
@@ -227,6 +237,8 @@ export function WorkoutSchedule() {
       )}
 
       {showHistory && <WorkoutHistory onClose={() => setShowHistory(false)} />}
+
+      {showProgress && <ExerciseProgressModal onClose={() => setShowProgress(false)} />}
 
       {editingTemplate && (
         <WorkoutTemplateEditor
