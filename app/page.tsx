@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Header } from "./components/Header";
 import { WorkoutSchedule } from "./components/WorkoutSchedule";
 import { WaterCard } from "./components/WaterCard";
-import { GoalsCard } from "./components/GoalsCard";
+import { TodoListCard } from "./components/TodoListCard";
 import { HabitsCard } from "./components/HabitsCard";
 import { DevotionalCard } from "./components/DevotionalCard";
 
@@ -27,7 +27,7 @@ export default function Home() {
       <WaterCard onChange={(cups, goal) => setWater({ cups, goal })} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-2 lg:grid-cols-3">
-        <GoalsCard />
+        <TodoListCard />
         <HabitsCard onChange={(completed, total) => setHabits({ completed, total })} />
         <DevotionalCard onChange={setDevotionalStreak} />
       </div>

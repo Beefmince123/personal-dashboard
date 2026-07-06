@@ -102,12 +102,12 @@ export interface HabitLog {
   created_at: string;
 }
 
-export interface Goal {
+export interface DailyTodo {
   id: string;
-  title: string;
-  target: number;
-  current: number;
-  unit: string | null;
+  date: string;
+  task: string;
+  completed: boolean;
+  order_index: number;
   created_at: string;
 }
 

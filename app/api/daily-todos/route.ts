@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { todayISO } from "@/lib/date";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const date = searchParams.get("date") ?? todayISO();
+
   const { data, error } = await supabase
-    .from("goals")
+    .from("daily_todos")
     .select("*")
-    .order("created_at", { ascending: true });
+    .eq("date", date)
+    .order("order_index", { ascending: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -16,20 +21,24 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { title, target, current, unit } = body;
+  const { task, date = todayISO() } = body;
 
-  if (!title) {
-    return NextResponse.json({ error: "title is required" }, { status: 400 });
+  if (!task) {
+    return NextResponse.json({ error: "task is required" }, { status: 400 });
+  }
+
+  const { count, error: countError } = await supabase
+    .from("daily_todos")
+    .select("id", { count: "exact", head: true })
+    .eq("date", date);
+
+  if (countError) {
+    return NextResponse.json({ error: countError.message }, { status: 500 });
   }
 
   const { data, error } = await supabase
-    .from("goals")
-    .insert({
-      title,
-      target: target ?? 0,
-      current: current ?? 0,
-      unit: unit ?? null,
-    })
+    .from("daily_todos")
+    .insert({ task, date, order_index: count ?? 0 })
     .select()
     .single();
 
@@ -42,20 +51,19 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const body = await request.json();
-  const { id, title, target, current, unit } = body;
+  const { id, task, completed, order_index } = body;
 
   if (!id) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
 
   const updates: Record<string, unknown> = {};
-  if (title !== undefined) updates.title = title;
-  if (target !== undefined) updates.target = target;
-  if (current !== undefined) updates.current = current;
-  if (unit !== undefined) updates.unit = unit;
+  if (task !== undefined) updates.task = task;
+  if (completed !== undefined) updates.completed = completed;
+  if (order_index !== undefined) updates.order_index = order_index;
 
   const { data, error } = await supabase
-    .from("goals")
+    .from("daily_todos")
     .update(updates)
     .eq("id", id)
     .select()
@@ -76,7 +84,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
 
-  const { error } = await supabase.from("goals").delete().eq("id", id);
+  const { error } = await supabase.from("daily_todos").delete().eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

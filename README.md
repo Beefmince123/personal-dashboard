@@ -1,8 +1,8 @@
 ## Personal Dashboard
 
-A daily dashboard for workouts, water intake, habits, goals, and a devotional
-streak, backed by Supabase (no auth — a single shared dataset via the public
-anon client).
+A daily dashboard for workouts, water intake, habits, a daily to-do list, and
+a devotional streak, backed by Supabase (no auth — a single shared dataset
+via the public anon client).
 
 ### Setup
 
@@ -15,7 +15,8 @@ anon client).
    devotional row. If you have an older copy of this project's database, note
    that this script **drops** the old free-form `workouts`/`workout_exercises`
    tables in favor of the template/schedule/completed-workout system described
-   below — back up any workout history first if you need it.
+   below, and drops the old `goals` table in favor of `daily_todos` — back up
+   anything you want to keep first.
 3. Copy `.env.local.example` to `.env.local` and fill in your project's URL and
    anon key (Project Settings → API):
    ```bash
@@ -38,8 +39,8 @@ read/write data at runtime.
 
 - `app/api/*` — route handlers backing each card (workout-templates,
   template-exercises, workout-schedule, completed-workouts,
-  completed-exercises, water-logs, habits, habit-logs, goals, devotional,
-  personal-info).
+  completed-exercises, water-logs, habits, habit-logs, daily-todos,
+  devotional, personal-info).
 - `app/components/*` — dashboard cards and modals.
 - `lib/supabase.ts` — public Supabase client.
 - `lib/types.ts` — shared row types.

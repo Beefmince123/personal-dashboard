@@ -100,15 +100,21 @@ create table if not exists habit_logs (
 );
 create index if not exists habit_logs_date_idx on habit_logs (date);
 
--- GOALS ----------------------------------------------------------------------
-create table if not exists goals (
+-- DAILY TODOS -------------------------------------------------------------------
+-- Replaces the old free-form goals table with a per-day checklist.
+-- If you have an existing project with the old goals table, this drops it —
+-- back up anything you want to keep before running this.
+drop table if exists goals cascade;
+
+create table if not exists daily_todos (
   id uuid primary key default gen_random_uuid(),
-  title text not null,
-  target numeric not null default 0,
-  current numeric not null default 0,
-  unit text,
+  date date not null,
+  task text not null,
+  completed boolean not null default false,
+  order_index int not null default 0,
   created_at timestamptz not null default now()
 );
+create index if not exists daily_todos_date_idx on daily_todos (date);
 
 -- DEVOTIONAL -------------------------------------------------------------------
 -- Single-row table holding the current quote/reference and streak state.
@@ -148,7 +154,7 @@ alter table completed_exercises enable row level security;
 alter table water_logs enable row level security;
 alter table habits enable row level security;
 alter table habit_logs enable row level security;
-alter table goals enable row level security;
+alter table daily_todos enable row level security;
 alter table devotional enable row level security;
 alter table personal_info enable row level security;
 
@@ -176,8 +182,8 @@ create policy "public access" on habits for all using (true) with check (true);
 drop policy if exists "public access" on habit_logs;
 create policy "public access" on habit_logs for all using (true) with check (true);
 
-drop policy if exists "public access" on goals;
-create policy "public access" on goals for all using (true) with check (true);
+drop policy if exists "public access" on daily_todos;
+create policy "public access" on daily_todos for all using (true) with check (true);
 
 drop policy if exists "public access" on devotional;
 create policy "public access" on devotional for all using (true) with check (true);
