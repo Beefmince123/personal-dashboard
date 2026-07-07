@@ -15,17 +15,32 @@ interface RestTimerProps {
   seconds: number;
   onComplete: () => void;
   onSkip: () => void;
+  /** Shown above the clock — "Rest" between sets, or "Hold" for a timed stretch. */
+  label?: string;
+  /** false requires an explicit tap to start (used for mobility holds, where
+   * the point is to start the countdown only once you're actually in the
+   * position); true (the default) keeps rest-between-sets starting immediately. */
+  autoStart?: boolean;
 }
 
-/** Countdown for rest periods between sets/exercises. Auto-fires onComplete
- * at zero; onSkip lets the user cut rest short. */
-export function RestTimer({ seconds, onComplete, onSkip }: RestTimerProps) {
+/** Countdown for rest periods (or timed holds). Auto-fires onComplete at
+ * zero; onSkip lets the user cut it short. */
+export function RestTimer({
+  seconds,
+  onComplete,
+  onSkip,
+  label = "Rest",
+  autoStart = true,
+}: RestTimerProps) {
   const [remaining, setRemaining] = useState(seconds);
-  const [running, setRunning] = useState(true);
+  const [running, setRunning] = useState(autoStart);
+  const [started, setStarted] = useState(autoStart);
 
   useEffect(() => {
     setRemaining(seconds);
-    setRunning(true);
+    setRunning(autoStart);
+    setStarted(autoStart);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seconds]);
 
   useEffect(() => {
@@ -48,7 +63,7 @@ export function RestTimer({ seconds, onComplete, onSkip }: RestTimerProps) {
 
   return (
     <div className="rounded-md bg-blue-50 p-4 text-center">
-      <p className="mb-2 text-sm font-medium text-blue-700">Rest</p>
+      <p className="mb-2 text-sm font-medium text-blue-700">{label}</p>
       <p className="mb-3 font-mono text-4xl font-bold tabular-nums text-blue-900">
         {formatTime(remaining)}
       </p>
@@ -59,13 +74,26 @@ export function RestTimer({ seconds, onComplete, onSkip }: RestTimerProps) {
         />
       </div>
       <div className="flex justify-center gap-2">
-        <button
-          onClick={() => setRunning((r) => !r)}
-          className="flex items-center gap-1 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-100"
-        >
-          {running ? <Pause size={14} /> : <Play size={14} />}
-          {running ? "Pause" : "Resume"}
-        </button>
+        {!started ? (
+          <button
+            onClick={() => {
+              setStarted(true);
+              setRunning(true);
+            }}
+            className="flex items-center gap-1 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-100"
+          >
+            <Play size={14} />
+            Start
+          </button>
+        ) : (
+          <button
+            onClick={() => setRunning((r) => !r)}
+            className="flex items-center gap-1 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-100"
+          >
+            {running ? <Pause size={14} /> : <Play size={14} />}
+            {running ? "Pause" : "Resume"}
+          </button>
+        )}
         <button
           onClick={onSkip}
           className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-gray-500 hover:bg-blue-100"

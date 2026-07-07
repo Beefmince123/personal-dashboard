@@ -3,7 +3,8 @@
 import { Check } from "lucide-react";
 import clsx from "clsx";
 
-interface MuayThaiCheckboxProps {
+interface CompletionCheckboxProps {
+  label: string;
   completedToday: boolean;
   onCheck: () => void;
 }
@@ -12,7 +13,7 @@ interface MuayThaiCheckboxProps {
 // call, since it's the one holding the completed-today state and streak.
 // No delete endpoint on completed-workouts, so — like the devotional "mark
 // complete" button — this only supports checking in, not undoing it.
-export function MuayThaiCheckbox({ completedToday, onCheck }: MuayThaiCheckboxProps) {
+export function CompletionCheckbox({ label, completedToday, onCheck }: CompletionCheckboxProps) {
   return (
     <label
       className={clsx(
@@ -43,7 +44,7 @@ export function MuayThaiCheckbox({ completedToday, onCheck }: MuayThaiCheckboxPr
           completedToday ? "text-blue-700" : "text-gray-700"
         )}
       >
-        Attended class today
+        {label}
       </span>
     </label>
   );

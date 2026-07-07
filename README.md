@@ -61,3 +61,19 @@ Workouts are template-based, similar to Hevy:
 - Manage templates and the weekly schedule from the settings icon on the
   Workout card; view past sessions and per-exercise progress graphs from the
   history icon.
+
+### Mobility routine
+
+A separate "Mobility" card runs alongside the PPL/Muay Thai schedule rather
+than replacing a day of it — `workout_schedule` only allows one template per
+day, so this is deliberately not scheduled there. It's the same
+`workout_templates`/`template_exercises` model with two additions:
+`section` (groups exercises into expandable Warm-Up/Dynamic
+Mobility/Static Stretching/Finisher cards) and `include_in_quick` (which
+exercises survive in the shorter "Quick" variant vs. "Full"). "Start
+Routine" reuses the same guided session as PPL workouts (`ActiveWorkout`),
+except timed holds with a known duration now count down and auto-advance
+instead of running as an open-ended stopwatch. A "Mark today's mobility
+done" checkbox is also available for logging a session without stepping
+through the timer. `supabase/schema.sql` seeds the routine automatically
+the first time it's run (skipped if a "Mobility" template already exists).

@@ -18,6 +18,8 @@ export interface TemplateExercise {
   duration_seconds: number | null;
   rest_seconds: number | null;
   order_index: number;
+  section: string | null;
+  include_in_quick: boolean;
   created_at: string;
 }
 

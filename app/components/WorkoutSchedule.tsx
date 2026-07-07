@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Card } from "./Card";
 import { WorkoutStreak } from "./WorkoutStreak";
-import { MuayThaiCheckbox } from "./MuayThaiCheckbox";
+import { CompletionCheckbox } from "./CompletionCheckbox";
 import { ActiveWorkout } from "./ActiveWorkout";
 import { WorkoutTemplateEditor } from "./WorkoutTemplateEditor";
 import { WorkoutHistory } from "./WorkoutHistory";
@@ -205,7 +205,8 @@ export function WorkoutSchedule() {
                 {completedToday ? (
                   <p className="text-sm font-medium text-blue-700">Workout completed today ✓</p>
                 ) : isMuayThai ? (
-                  <MuayThaiCheckbox
+                  <CompletionCheckbox
+                    label="Attended class today"
                     completedToday={!!completedToday}
                     onCheck={handleMuayThaiComplete}
                   />

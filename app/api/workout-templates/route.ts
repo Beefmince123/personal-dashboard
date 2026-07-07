@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
       is_timed: ex.is_timed ?? false,
       duration_seconds: ex.duration_seconds ?? null,
       rest_seconds: ex.rest_seconds ?? null,
+      section: ex.section ?? null,
+      include_in_quick: ex.include_in_quick ?? true,
       order_index: ex.order_index ?? index,
     }));
     const { error: exError } = await supabase.from("template_exercises").insert(rows);
@@ -106,6 +108,8 @@ export async function PUT(request: NextRequest) {
         is_timed: ex.is_timed ?? false,
         duration_seconds: ex.duration_seconds ?? null,
         rest_seconds: ex.rest_seconds ?? null,
+        section: ex.section ?? null,
+        include_in_quick: ex.include_in_quick ?? true,
         order_index: ex.order_index ?? index,
       }));
       const { error: insError } = await supabase.from("template_exercises").insert(rows);

@@ -50,7 +50,13 @@ export function ActiveWorkout({ template, onClose, onFinished }: ActiveWorkoutPr
       sets_completed: exercise.sets ?? currentSet,
       reps_completed: exercise.is_timed ? null : exercise.reps,
       weight_used_kg: exercise.is_bodyweight ? null : exercise.weight_kg,
-      duration_seconds: exercise.is_timed ? timedSeconds : exercise.duration_seconds,
+      // A known target duration means the hold ran as an auto-advancing
+      // countdown (see below), so that's the real elapsed time — the
+      // manually-tracked stopwatch (timedSeconds) only applies to
+      // open-ended holds with no preset duration.
+      duration_seconds: exercise.is_timed
+        ? (exercise.duration_seconds ?? timedSeconds)
+        : exercise.duration_seconds,
       rest_seconds: exercise.rest_seconds,
     });
   }
@@ -152,7 +158,22 @@ export function ActiveWorkout({ template, onClose, onFinished }: ActiveWorkoutPr
               </p>
             </div>
 
-            {exercise.is_timed && <ExerciseTimer onTick={setTimedSeconds} />}
+            {exercise.is_timed &&
+              (exercise.duration_seconds ? (
+                // Known target duration (e.g. a mobility hold): count down
+                // and auto-advance to the next set/exercise at zero, with
+                // "Skip" as the manual alternative.
+                <RestTimer
+                  key={`${exerciseIndex}-${currentSet}`}
+                  seconds={exercise.duration_seconds}
+                  label="Hold"
+                  autoStart={false}
+                  onComplete={handleSetCompleted}
+                  onSkip={handleSetCompleted}
+                />
+              ) : (
+                <ExerciseTimer onTick={setTimedSeconds} />
+              ))}
 
             {showRest ? (
               <RestTimer

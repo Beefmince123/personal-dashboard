@@ -37,9 +37,18 @@ create table if not exists template_exercises (
   duration_seconds int,
   rest_seconds int,
   order_index int not null default 0,
+  -- Sub-heading for grouping exercises within a template (e.g. mobility's
+  -- Warm-Up/Dynamic Mobility/Static Stretching/Finisher). Null for templates
+  -- that don't group exercises (existing PPL templates render as a flat list).
+  section text,
+  -- Whether this exercise is part of a template's shorter "quick" variant.
+  -- Defaults to true so existing exercises are unaffected.
+  include_in_quick boolean not null default true,
   created_at timestamptz not null default now()
 );
 create index if not exists template_exercises_template_id_idx on template_exercises (template_id);
+alter table template_exercises add column if not exists section text;
+alter table template_exercises add column if not exists include_in_quick boolean not null default true;
 
 create table if not exists workout_schedule (
   id uuid primary key default gen_random_uuid(),
@@ -73,6 +82,46 @@ create table if not exists completed_exercises (
   created_at timestamptz not null default now()
 );
 create index if not exists completed_exercises_workout_id_idx on completed_exercises (completed_workout_id);
+
+-- MOBILITY ROUTINE SEED ---------------------------------------------------
+-- Seeds a "Mobility" template (a daily flow, not tied to any day_of_week —
+-- it's meant to run alongside whatever's scheduled, so it deliberately
+-- isn't wired into workout_schedule, which only allows one template per
+-- day). Grouped into sections; a handful of exercises are excluded from
+-- the "quick" variant (chest stretch + finisher). Safe to re-run: skips if
+-- a "Mobility" template already exists.
+do $$
+declare
+  v_template_id uuid;
+begin
+  if not exists (select 1 from workout_templates where name = 'Mobility') then
+    insert into workout_templates (name, description)
+    values ('Mobility', 'Daily 10-15 minute mobility flow')
+    returning id into v_template_id;
+
+    insert into template_exercises
+      (template_id, section, exercise_name, sets, reps, is_bodyweight, is_timed, duration_seconds, include_in_quick, order_index)
+    values
+      (v_template_id, 'Warm-Up', 'Cat-cow flows', 1, 10, true, false, null, true, 0),
+      (v_template_id, 'Warm-Up', 'Arm circles (forward & back)', 2, 10, true, false, null, true, 1),
+      (v_template_id, 'Warm-Up', 'Bodyweight squats', 1, 10, true, false, null, true, 2),
+
+      (v_template_id, 'Dynamic Mobility', 'Shoulder dislocates (band/broomstick)', 1, 10, true, false, null, true, 3),
+      (v_template_id, 'Dynamic Mobility', 'Thread-the-needle rotations (each side)', 2, 5, true, false, null, true, 4),
+      (v_template_id, 'Dynamic Mobility', 'World''s greatest stretch (each side)', 2, 3, true, false, null, true, 5),
+      (v_template_id, 'Dynamic Mobility', '90/90 hip flows (each direction, each side)', 4, 5, true, false, null, true, 6),
+      (v_template_id, 'Dynamic Mobility', 'Deep lunge, hip flexor emphasis (each side)', 2, null, true, true, 20, true, 7),
+      (v_template_id, 'Dynamic Mobility', 'Downward dog', 1, null, true, true, 30, true, 8),
+
+      (v_template_id, 'Static Stretching', 'Pigeon pose (each side)', 2, null, true, true, 60, true, 9),
+      (v_template_id, 'Static Stretching', 'Sleeper stretch (each side)', 2, null, true, true, 45, true, 10),
+      (v_template_id, 'Static Stretching', 'Chest doorway/wall stretch (each side)', 2, null, true, true, 45, false, 11),
+      (v_template_id, 'Static Stretching', 'Child''s pose', 1, null, true, true, 45, true, 12),
+
+      (v_template_id, 'Finisher', 'Dead-hang (20-30 sec)', 1, null, true, true, 25, false, 13),
+      (v_template_id, 'Finisher', 'Supine spinal twist (each side)', 2, null, true, true, 15, false, 14);
+  end if;
+end $$;
 
 -- WATER ------------------------------------------------------------------
 create table if not exists water_logs (

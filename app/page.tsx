@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Header } from "./components/Header";
 import { WorkoutSchedule } from "./components/WorkoutSchedule";
+import { MobilityCard } from "./components/MobilityCard";
 import { WaterCard } from "./components/WaterCard";
 import { TodoListCard } from "./components/TodoListCard";
 import { HabitsCard } from "./components/HabitsCard";
@@ -25,6 +26,10 @@ export default function Home() {
 
       <WorkoutSchedule />
       <WaterCard onChange={(cups, goal) => setWater({ cups, goal })} />
+
+      <div className="lg:col-span-2">
+        <MobilityCard />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-2 lg:grid-cols-3">
         <TodoListCard />

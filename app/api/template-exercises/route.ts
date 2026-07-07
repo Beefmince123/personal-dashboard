@@ -34,6 +34,8 @@ export async function POST(request: NextRequest) {
     is_timed,
     duration_seconds,
     rest_seconds,
+    section,
+    include_in_quick,
     order_index,
   } = body;
 
@@ -56,6 +58,8 @@ export async function POST(request: NextRequest) {
       is_timed: is_timed ?? false,
       duration_seconds: duration_seconds ?? null,
       rest_seconds: rest_seconds ?? null,
+      section: section ?? null,
+      include_in_quick: include_in_quick ?? true,
       order_index: order_index ?? 0,
     })
     .select()
@@ -80,6 +84,8 @@ export async function PUT(request: NextRequest) {
     is_timed,
     duration_seconds,
     rest_seconds,
+    section,
+    include_in_quick,
     order_index,
   } = body;
 
@@ -96,6 +102,8 @@ export async function PUT(request: NextRequest) {
   if (is_timed !== undefined) updates.is_timed = is_timed;
   if (duration_seconds !== undefined) updates.duration_seconds = duration_seconds;
   if (rest_seconds !== undefined) updates.rest_seconds = rest_seconds;
+  if (section !== undefined) updates.section = section;
+  if (include_in_quick !== undefined) updates.include_in_quick = include_in_quick;
   if (order_index !== undefined) updates.order_index = order_index;
 
   const { data, error } = await supabase
